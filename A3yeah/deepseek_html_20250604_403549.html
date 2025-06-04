@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Biblioteca Virtual</title>
+    <link rel="stylesheet" href="style.css" />
+    <base href="/your-repo-name/"> <!-- Substitua pelo nome do seu repositório -->
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastro de Livros</h1>
+        <form id="livro-form" enctype="multipart/form-data">
+            <input type="text" name="titulo" id="titulo" placeholder="Título" required />
+            <input type="text" name="autor" id="autor" placeholder="Autor" required />
+            <input type="file" name="arquivo" id="arquivo" />
+            <input type="number" name="ano" id="ano" placeholder="Ano" required />
+            <button type="submit">Cadastrar</button>
+        </form>
+
+        <h2>Livros Cadastrados</h2>
+        <ul id="livros-lista"></ul>
+    </div>
+
+    <script>
+        // URL da API no Railway (substitua pela sua URL)
+        const API_BASE_URL = 'https://your-railway-app-name.up.railway.app';
+        
+        const form = document.getElementById("livro-form");
+        const lista = document.getElementById("livros-lista");
+
+        async function carregarLivros() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/livros`);
+                if (!res.ok) throw new Error('Erro ao carregar livros');
+                const livros = await res.json();
+                lista.innerHTML = "";
+
+                livros.forEach((livro) => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+                        <strong>${livro.titulo}</strong><br/>
+                        ${livro.autor} (${livro.ano})<br/>
+                        ${livro.arquivoUrl 
+                          ? `<a href="${livro.arquivoUrl}" target="_blank" rel="noopener noreferrer">Baixar arquivo</a>` 
+                          : '<em>Sem arquivo</em>'
+                        }
+                    `;
+                    lista.appendChild(li);
+                });
+            } catch (err) {
+                console.error("Erro:", err);
+                alert("Erro ao carregar livros. Verifique o console para mais detalhes.");
+            }
+        }
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const titulo = document.getElementById("titulo").value.trim();
+            const autor = document.getElementById("autor").value.trim();
+            const ano = Number(document.getElementById("ano").value);
+            const arquivoInput = document.getElementById("arquivo");
+
+            if (!titulo || !autor || !ano) {
+                alert("Preencha todos os campos!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("titulo", titulo);
+            formData.append("autor", autor);
+            formData.append("ano", ano);
+
+            if (arquivoInput.files.length > 0) {
+                formData.append("arquivo", arquivoInput.files[0]);
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/livros`, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!res.ok) throw new Error('Erro ao cadastrar livro');
+
+                form.reset();
+                await carregarLivros();
+            } catch (err) {
+                console.error("Erro:", err);
+                alert("Erro ao cadastrar livro. Verifique o console para mais detalhes.");
+            }
+        });
+
+        // Carrega os livros quando a página é aberta
+        document.addEventListener('DOMContentLoaded', carregarLivros);
+    </script>
+</body>
+</html>
